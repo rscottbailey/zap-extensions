@@ -44,15 +44,15 @@ public class WebSocketFuzzerTask extends AbstractFuzzerTask<WebSocketMessageDTO>
 
     @Override
     protected void runImpl(WebSocketMessageDTO message, List<Object> payloads) {
-        getParent().preProcessMessage(getId(), message, payloads);
+        getParent().preProcessMessage(getIndex(), message, payloads);
         WebSocketFuzzMessageDTO messageSent =
                 sendMessage(getParent().getWebSocketProxies(), (WebSocketFuzzMessageDTO) message);
         if (messageSent == null) {
             return;
         }
-        getParent().messageSent(getId(), messageSent);
+        getParent().messageSent(getIndex(), messageSent);
 
-        WebSocketFuzzResult result = new WebSocketFuzzResult(getId(), messageSent, payloads);
+        WebSocketFuzzResult result = new WebSocketFuzzResult(getIndex(), messageSent, payloads);
         String fuzz = payloads.toString();
         messageSent.fuzz = fuzz.substring(0, Math.min(150, fuzz.length()));
         getParent().fuzzResultAvailable(result);
