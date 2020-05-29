@@ -32,25 +32,6 @@ public class HttpFuzzerReflectionDetector implements HttpFuzzerMessageProcessor 
     public static final String NAME =
             Constant.messages.getString("fuzz.httpfuzzer.processor.reflection.name");
 
-    private static HttpFuzzerReflectionDetector instance;
-
-    public static HttpFuzzerReflectionDetector getInstance() {
-        if (instance == null) {
-            createInstance();
-        }
-        return instance;
-    }
-
-    private static synchronized void createInstance() {
-        if (instance == null) {
-            instance = new HttpFuzzerReflectionDetector();
-        }
-    }
-
-    public HttpFuzzerReflectionDetector() {
-        this(null);
-    }
-
     @Override
     public String getName() {
         return NAME;
