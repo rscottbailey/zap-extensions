@@ -21,9 +21,15 @@
 </p>
 <h3>Message Processors</h3>
 <p>
-    The requisite processor enabled by default for all requests is “Request Content-Length Updater”
-    which updates the content-length field according to the attack payload. Option to add more
-    or change the processors will be added in future releases.
+    The requisite processors enabled by default for all requests are:
+</p>
+<ul>
+    <li>"Request Content-Length Updater": updates the content-length field according to
+        the attack payload.</li>
+    <li>"Payload Reflection Detector": reports if the payload appears in the response.</li>
+</ul>
+<p>
+    Option to add more or change the processors will be added in future releases.
 </p>
 <h3>Fuzzer Options</h3>
 <p>

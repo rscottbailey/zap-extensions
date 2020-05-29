@@ -58,6 +58,7 @@ import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzerHandler;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzerMessageProcessor;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzerOptions;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.processors.RequestContentLengthUpdaterProcessor;
+import org.zaproxy.zap.extension.fuzz.httpfuzzer.processors.HttpFuzzerReflectionDetector;
 import org.zaproxy.zap.extension.fuzz.messagelocations.MessageLocationsReplacementStrategy;
 import org.zaproxy.zap.extension.fuzz.payloads.DefaultPayload;
 import org.zaproxy.zap.extension.fuzz.payloads.PayloadGeneratorMessageLocation;
@@ -283,9 +284,9 @@ public class FuzzAPI extends ApiImplementor {
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocationsTest =
                         createFuzzLocationsFromJsonInput(fuzzLocationsObject);
                 RecordHistory recordHistoryTest = getRecordHistory(params);
-                List<HttpFuzzerMessageProcessor> processors =
-                        Collections.singletonList(
-                                RequestContentLengthUpdaterProcessor.getInstance());
+                List<HttpFuzzerMessageProcessor> processors = new ArrayList<>();
+                processors.add(RequestContentLengthUpdaterProcessor.getInstance());
+                processors.add(HttpFuzzerReflectionDetector.getInstance());
                 httpFuzzerHandler = new HttpFuzzerHandler();
                 HttpFuzzer httpFuzzerTest =
                         httpFuzzerHandler.createFuzzer(
