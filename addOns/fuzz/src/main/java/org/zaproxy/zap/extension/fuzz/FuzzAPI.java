@@ -285,8 +285,8 @@ public class FuzzAPI extends ApiImplementor {
                         createFuzzLocationsFromJsonInput(fuzzLocationsObject);
                 RecordHistory recordHistoryTest = getRecordHistory(params);
                 List<HttpFuzzerMessageProcessor> processors = new ArrayList<>();
-                processors.add(RequestContentLengthUpdaterProcessor.getInstance());
-                processors.add(HttpFuzzerReflectionDetector.getInstance());
+                processors.add(new RequestContentLengthUpdaterProcessor());
+                processors.add(new HttpFuzzerReflectionDetector());
                 httpFuzzerHandler = new HttpFuzzerHandler();
                 HttpFuzzer httpFuzzerTest =
                         httpFuzzerHandler.createFuzzer(
