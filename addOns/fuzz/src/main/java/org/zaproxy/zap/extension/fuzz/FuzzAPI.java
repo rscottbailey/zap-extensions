@@ -112,6 +112,9 @@ public class FuzzAPI extends ApiImplementor {
     private static final String PARAM_RETRIES = "retriesOnIOError";
     private static final String PARAM_DELAY = "delayInMs";
     private static final String PARAM_THREADS = "concurrentScanningThreads";
+    private static final String PARAM_SCRIPT_NAME = "scriptName";
+    private static final String PARAM_SCRIPT_PARAMS = "scriptParameters";
+    private static final String PARAM_SCRIPT_INSERT = "insertAt";
     private static final Logger LOGGER = Logger.getLogger(FuzzAPI.class);
 
     private FuzzerOptions fuzzerOptions;
@@ -120,6 +123,10 @@ public class FuzzAPI extends ApiImplementor {
     private static final String ACTION_SET_HTTP_FUZZ_OPTIONS = "setHttpFuzzerOptions";
     private static final String ACTION_RESET_DEFAULT_HTTP_FUZZ_OPTIONS =
             "resetHttpFuzzOptionsToDefault";
+    private static final String ACTION_ADD_HTTP_FUZZ_MESSAGE_PROCESSOR = "addMessageProcessor";
+    private static final String ACTION_REMOVE_HTTP_FUZZ_MESSAGE_PROCESSOR = "removeMessageProcessor";
+    private static final String ACTION_RESET_DEFAULT_HTTP_FUZZ_MESSAGE_PROCESSORS = "resetMessageProcessorsToDefault";
+    private static final String VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS = "getMessageProcessors";
     private static final String ACTION_MULTIPLE_PAYLOAD_FUZZER = "multiplePayloadFuzzer";
     private static final String VIEW_FUZZER_PROGRESS = "fuzzerProgress";
     private static final String VIEW_GET_MESSAGES_SENT = "getMessagesSentCount";
@@ -136,7 +143,6 @@ public class FuzzAPI extends ApiImplementor {
     }
 
     public FuzzAPI(ExtensionFuzz ext) {
-        httpFuzzerMessageProcessors = new ArrayList<>();
         this.extension = ext;
         this.addApiAction(
                 new ApiAction(
@@ -169,7 +175,20 @@ public class FuzzAPI extends ApiImplementor {
         this.addApiAction(new ApiAction(ACTION_STOP_SCAN, new String[] {PARAM_FUZZER_ID}));
         this.addApiAction(new ApiAction(ACTION_PAUSE_SCAN, new String[] {PARAM_FUZZER_ID}));
         this.addApiAction(new ApiAction(ACTION_RESUME_SCAN, new String[] {PARAM_FUZZER_ID}));
+        this.addApiAction(
+                new ApiAction(
+                        ACTION_ADD_HTTP_FUZZ_MESSAGE_PROCESSOR,
+                        new String[] {
+                            PARAM_SCRIPT_NAME, PARAM_SCRIPT_PARAMS, PARAM_SCRIPT_INSERT
+                        }));
+        this.addApiAction(
+                new ApiAction(
+                        ACTION_REMOVE_HTTP_FUZZ_MESSAGE_PROCESSOR,
+                        new String[] {PARAM_PROCESSOR_NAME
+                        }));
+        this.addApiAction(new ApiAction(ACTION_RESET_DEFAULT_HTTP_FUZZ_MESSAGE_PROCESSORS));
 
+        this.addApiView(new ApiView(VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS));
         this.addApiView(new ApiView(VIEW_FUZZER_PROGRESS, new String[] {PARAM_FUZZER_ID}));
         this.addApiView(new ApiView(VIEW_GET_RESULTS, new String[] {PARAM_FUZZER_ID}));
         this.addApiView(new ApiView(VIEW_GET_MESSAGES_SENT, new String[] {PARAM_FUZZER_ID}));
@@ -183,6 +202,12 @@ public class FuzzAPI extends ApiImplementor {
 
     private void resetHttpFuzzerOptions() {
         fuzzerOptions = new FuzzerOptions(getOptions(extension.getDefaultFuzzerOptions()));
+    }
+
+    private void resetMessageProcessors() {
+        List<HttpFuzzerMessageProcessor> httpFuzzerMessageProcessors = new ArrayList<>();
+        httpFuzzerMessageProcessors.add(new RequestContentLengthUpdaterProcessor());
+        httpFuzzerMessageProcessors.add(new HttpFuzzerReflectionDetector());
     }
 
     @Override
@@ -236,6 +261,8 @@ public class FuzzAPI extends ApiImplementor {
                                     httpMessage.getHistoryRef().getHistoryId(), httpMessage));
                 }
                 return apiResponseList;
+            case VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS:
+                return new ApiResponseElement(VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS, "FIXME");
             default:
                 throw new ApiException(ApiException.Type.BAD_VIEW);
         }
@@ -283,9 +310,7 @@ public class FuzzAPI extends ApiImplementor {
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocationsTest =
                         createFuzzLocationsFromJsonInput(fuzzLocationsObject);
                 RecordHistory recordHistoryTest = getRecordHistory(params);
-                List<HttpFuzzerMessageProcessor> processors = new ArrayList<>();
-                processors.add(new RequestContentLengthUpdaterProcessor());
-                processors.add(new HttpFuzzerReflectionDetector());
+                List<HttpFuzzerMessageProcessor> processors = getMessageProcessors;
                 httpFuzzerHandler = new HttpFuzzerHandler();
                 HttpFuzzer httpFuzzerTest =
                         httpFuzzerHandler.createFuzzer(
@@ -345,13 +370,13 @@ public class FuzzAPI extends ApiImplementor {
                 }
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocations =
                         createFuzzLocations(httpLocation, locationStart, locationEnd, payloadPath);
-                httpFuzzerMessageProcessors.add(RequestContentLengthUpdaterProcessor.getInstance());
+                List<HttpFuzzerMessageProcessor> processors = getMessageProcessors;
                 HttpFuzzer httpFuzzerSimple =
                         httpFuzzerHandler.createFuzzer(
                                 recordHistory.getHttpMessage(),
                                 fuzzLocations,
                                 getOptions(),
-                                httpFuzzerMessageProcessors);
+                                processors);
                 extension.runFuzzer(httpFuzzerHandler, httpFuzzerSimple);
                 assert httpFuzzerSimple
                         != null; // Can't be null if it is an exception should be thrown before
@@ -367,6 +392,19 @@ public class FuzzAPI extends ApiImplementor {
                         getParam(params, PARAM_RETRIES, -1),
                         getParam(params, PARAM_DELAY, -1),
                         getParam(params, PARAM_THREADS, -1));
+                return ApiResponseElement.OK;
+            case ACTION_RESET_DEFAULT_HTTP_FUZZ_MESSAGE_PROCESSORS:
+                resetMessageProcessors();
+                return ApiResponseElement.OK;
+            case ACTION_ADD_HTTP_FUZZ_MESSAGE_PROCESSOR:
+                addMessageProcessor(
+                        getParam(params, PARAM_SCRIPT_NAME, null),
+                        getParam(params, PARAM_SCRIPT_PARAMS, null),
+                        getParam(params, PARAM_SCRIPT_INSERT, -1));
+                return ApiResponseElement.OK;
+            case ACTION_REMOVE_HTTP_FUZZ_MESSAGE_PROCESSOR:
+                removeMessageProcessor(
+                        getParam(params, PARAM_SCRIPT_NAME, null));
                 return ApiResponseElement.OK;
             case ACTION_START_SCAN:
                 httpFuzzer = getFuzzer(params);
@@ -579,6 +617,13 @@ public class FuzzAPI extends ApiImplementor {
 
     private HttpFuzzerOptions getOptions(FuzzerOptions baseOptions) {
         return new HttpFuzzerOptions(baseOptions, false, false, 100, false);
+    }
+
+    private List<HttpFuzzerMessageProcessor> getMessageProcessors() {
+        if (httpFuzzerMessageProcessors == null) {
+            resetMessageProcessors();
+        }
+        return new List<HttpFuzzerMessageProcessor>(httpFuzzerMessageProcessors);
     }
 
     /**
