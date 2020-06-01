@@ -503,6 +503,62 @@ public class FuzzAPI extends ApiImplementor {
                         messageLocationsReplacementStrategy);
     }
 
+    /**
+     * This method is not supposed to change the default message processors; it
+     * just tracks what is set up by the user so new fuzzers can be created with
+     * this list of processors.
+     * 
+     * @param scriptName - Name of processor script to attach to fuzzer
+     * @param scriptParameters - Map of parameters passed to this script
+     * @param insertAt - Insert processor where? (0=first, 1=second, ... -1=end)
+     */
+    private void addMessageProcessor(
+            String scriptName, String scriptParameters, int insertAt) {
+        int where = -1 == insertAt ? httpFuzzerMessageProcessors.size() : insertAt; 
+
+        // We claim we're adding a script, but actually we're adding a generic
+        // processor that will call the script.
+        LOGGER.info(
+            "Inserting message processor script adapter: "
+                + where.toString()
+                + " "
+                + scriptName);
+        var fuzzScriptWrapper = new ScriptWrapper(
+            scriptName,
+            "This is description",
+            "This is engineName",
+            "This is type (ScriptType)",
+            true,
+            "This is filename"
+        );
+        var fuzzScriptAdapter = new FuzzerHttpMessageScriptProcessorAdapter(
+            fuzzScriptWrapper,
+            scriptParameters
+        );
+        httpFuzzerMessageProcessors.add(where, fuzzScriptAdapter);
+    }
+
+    /**
+     * This method is not supposed to change the default message processors; it
+     * just tracks what is set up by the user so new fuzzers can be created with
+     * this list of processors.
+     * 
+     * @param scriptName - Name of processor script to remove from list
+     */
+    private void removeMessageProcessor(
+            String scriptName) {
+
+        // Remove (only) the first processor with a matching name
+        for (int i=0; i<httpFuzzerMessageProcessors.size(); i++) {
+            if (httpFuzzerMessageProcessors.get(i).getName() == scriptName) {
+                LOGGER.info(
+                    "Removing fuzz message processor #" + i.toString()
+                )
+                httpFuzzerMessageProcessors.remove(i);
+                break;
+            }
+        }
+
     private RecordHistory getRecordHistory(TableHistory tableHistory, Integer id)
             throws ApiException {
         RecordHistory recordHistory;
