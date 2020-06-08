@@ -518,7 +518,7 @@ public class FuzzAPI extends ApiImplementor {
 
         // Look up the correct script type; it will always be httpfuzzerprocessor
         // since that is what we are manipulating.
-        scriptType = extension.getScriptType("httpfuzzerprocessor")
+        scriptType = extension.getScriptType("httpfuzzerprocessor");
 
         // We're accepting
 
@@ -567,11 +567,12 @@ public class FuzzAPI extends ApiImplementor {
             if (httpFuzzerMessageProcessors.get(i).getName() == scriptName) {
                 LOGGER.info(
                     "Removing fuzz message processor #" + i.toString()
-                )
+                );
                 httpFuzzerMessageProcessors.remove(i);
                 break;
             }
         }
+    }
 
     private RecordHistory getRecordHistory(TableHistory tableHistory, Integer id)
             throws ApiException {
