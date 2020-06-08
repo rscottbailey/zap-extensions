@@ -516,6 +516,12 @@ public class FuzzAPI extends ApiImplementor {
             String scriptName, String scriptParameters, int insertAt) {
         int where = -1 == insertAt ? httpFuzzerMessageProcessors.size() : insertAt; 
 
+        // Look up the correct script type; it will always be httpfuzzerprocessor
+        // since that is what we are manipulating.
+        scriptType = extension.getScriptType("httpfuzzerprocessor")
+
+        // We're accepting
+
         // We claim we're adding a script, but actually we're adding a generic
         // processor that will call the script.
         LOGGER.info(
@@ -523,14 +529,22 @@ public class FuzzAPI extends ApiImplementor {
                 + where.toString()
                 + " "
                 + scriptName);
+        ScriptWrapper fuzzScriptWrapper = getScriptsExtension().getScript(scriptName);
+
+        /*
         var fuzzScriptWrapper = new ScriptWrapper(
             scriptName,
             "This is description",
-            "This is engineName",
-            "This is type (ScriptType)",
+            engineName,
+            scriptType,
             true,
             "This is filename"
         );
+
+
+        ScriptWrapper(scriptName, "description", ScriptEngineWrapper scriptEngine, scriptType) 
+        */
+
         var fuzzScriptAdapter = new FuzzerHttpMessageScriptProcessorAdapter(
             fuzzScriptWrapper,
             scriptParameters
