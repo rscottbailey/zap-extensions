@@ -517,6 +517,9 @@ public class FuzzAPI extends ApiImplementor {
      */
     private void addMessageProcessorScript(
             String scriptName, String scriptParameters, int insertAt) {
+        if (httpFuzzerMessageProcessors == null) {
+            resetMessageProcessors();
+        }
         int where = -1 == insertAt ? httpFuzzerMessageProcessors.size() : insertAt;
 
         // We claim we're adding a script, but actually we're adding a generic
@@ -548,6 +551,9 @@ public class FuzzAPI extends ApiImplementor {
      * @param scriptName - Name of processor script to remove from list
      */
     private void removeMessageProcessorScript(String scriptName) {
+        if (httpFuzzerMessageProcessors == null) {
+            resetMessageProcessors();
+        }
 
         // Remove (only) the first processor with a matching name
         for (int i = 0; i < httpFuzzerMessageProcessors.size(); i++) {
