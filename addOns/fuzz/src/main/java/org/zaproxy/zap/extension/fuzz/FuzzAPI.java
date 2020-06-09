@@ -209,7 +209,7 @@ public class FuzzAPI extends ApiImplementor {
     }
 
     private void resetMessageProcessors() {
-        List<HttpFuzzerMessageProcessor> httpFuzzerMessageProcessors = new ArrayList<>();
+        httpFuzzerMessageProcessors = new ArrayList<HttpFuzzerMessageProcessor>();
         httpFuzzerMessageProcessors.add(new RequestContentLengthUpdaterProcessor());
         httpFuzzerMessageProcessors.add(new HttpFuzzerReflectionDetector());
     }
