@@ -115,6 +115,8 @@ public class FuzzAPI extends ApiImplementor {
     private static final String PARAM_DELAY = "delayInMs";
     private static final String PARAM_THREADS = "concurrentScanningThreads";
     private static final String PARAM_SCRIPT_NAME = "scriptName";
+    private static final String PARAM_SCRIPT_PATH = "scriptPath";
+    private static final String PARAM_SCRIPT_ENGINE = "scriptEngine";
     private static final String PARAM_SCRIPT_PARAMS = "scriptParameters";
     private static final String PARAM_SCRIPT_INSERT = "insertAt";
     private static final Logger LOGGER = Logger.getLogger(FuzzAPI.class);
@@ -181,7 +183,11 @@ public class FuzzAPI extends ApiImplementor {
                 new ApiAction(
                         ACTION_ADD_HTTP_FUZZ_MESSAGE_PROCESSOR,
                         new String[] {
-                            PARAM_SCRIPT_NAME, PARAM_SCRIPT_PARAMS, PARAM_SCRIPT_INSERT
+                            PARAM_SCRIPT_NAME,
+                            PARAM_SCRIPT_PATH,
+                            PARAM_SCRIPT_ENGINE,
+                            PARAM_SCRIPT_PARAMS,
+                            PARAM_SCRIPT_INSERT
                         }));
         this.addApiAction(
                 new ApiAction(
@@ -401,13 +407,15 @@ public class FuzzAPI extends ApiImplementor {
                 resetMessageProcessors();
                 return ApiResponseElement.OK;
             case ACTION_ADD_HTTP_FUZZ_MESSAGE_PROCESSOR:
-                addMessageProcessor(
+                addMessageProcessorScript(
                         getParam(params, PARAM_SCRIPT_NAME, null),
+                        getParam(params, PARAM_SCRIPT_PATH, null),
+                        getParam(params, PARAM_SCRIPT_ENGINE, null),
                         getParam(params, PARAM_SCRIPT_PARAMS, null),
                         getParam(params, PARAM_SCRIPT_INSERT, -1));
                 return ApiResponseElement.OK;
             case ACTION_REMOVE_HTTP_FUZZ_MESSAGE_PROCESSOR:
-                removeMessageProcessor(
+                removeMessageProcessorScript(
                         getParam(params, PARAM_SCRIPT_NAME, null));
                 return ApiResponseElement.OK;
             case ACTION_START_SCAN:
@@ -513,21 +521,41 @@ public class FuzzAPI extends ApiImplementor {
      * this list of processors.
      * 
      * @param scriptName - Name of processor script to attach to fuzzer
-     * @param scriptParameters - Map of parameters passed to this script
+     * @param scriptPath - Path to file containing the script
+     * @param engineName - Name of engine that will execute the script
+     * @param scriptParameters - JSON-formatted Map of parameters passed to this script
      * @param insertAt - Insert processor where? (0=first, 1=second, ... -1=end)
      */
-    private void addMessageProcessor(
-            String scriptName, String scriptParameters, int insertAt) {
+    private void addMessageProcessorScript(
+            String scriptName, String scriptPath, String engineName, String scriptParameters, int insertAt) {
         int where = -1 == insertAt ? httpFuzzerMessageProcessors.size() : insertAt; 
 
         // We claim we're adding a script, but actually we're adding a generic
         // processor that will call the script.
         LOGGER.info(
-            "Inserting message processor script adapter: "
+            "Inserting fuzz message processor script: "
                 + Integer.toString(where)
                 + " "
                 + scriptName);
-        ScriptWrapper fuzzScriptWrapper = getScriptsExtension().getScript(scriptName);
+
+        // There does not appear to be a usable mechanism for locating a script, e.g.
+        // ScriptWrapper fuzzScriptWrapper = getScriptsExtension().getScript(scriptName);
+        // so we need to create the wrapper object ourselves, which likely requires
+        // that it not have been defined previously anywhere else.
+
+        // Look up the correct script type; it will always be httpfuzzerprocessor
+        // since that is what we are manipulating.
+        ScriptType scriptType = extension.getScriptType("httpfuzzerprocessor");
+        
+        // Create wrapper with caller arguments and derived type
+        ScriptWrapper fuzzScriptWrapper = ScriptWrapper(
+            scriptName,
+            scriptName, // actually description
+            String engineName,
+            scriptType,
+            true, // enabled?
+            File(scriptPath)
+        );
 
         // We need to convert JSON string to a map
         HashMap<String, String> scriptParameterMap = (HashMap<String, String>) JSONObject.toBean(
@@ -550,14 +578,14 @@ public class FuzzAPI extends ApiImplementor {
      * 
      * @param scriptName - Name of processor script to remove from list
      */
-    private void removeMessageProcessor(
+    private void removeMessageProcessorScript(
             String scriptName) {
 
         // Remove (only) the first processor with a matching name
         for (int i=0; i<httpFuzzerMessageProcessors.size(); i++) {
             if (httpFuzzerMessageProcessors.get(i).getName() == scriptName) {
                 LOGGER.info(
-                    "Removing fuzz message processor #" + Integer.toString(i)
+                    "Removing fuzz message processor script #" + Integer.toString(i)
                 );
                 httpFuzzerMessageProcessors.remove(i);
                 break;

@@ -21,15 +21,26 @@
 </p>
 <h3>Message Processors</h3>
 <p>
-    The requisite processors enabled by default for all requests are:
+    The message processors enabled by default for all requests are:
 </p>
-<ul>
+<ol>
     <li>"Request Content-Length Updater": updates the content-length field according to
         the attack payload.</li>
     <li>"Payload Reflection Detector": reports if the payload appears in the response.</li>
-</ul>
+</ol>
 <p>
-    Option to add more or change the processors will be added in future releases.
+    Additional script-based message processors can be added or removed through the
+    FuzzAPI. The API requires that a script <it>not</it> have been loaded by zaproxy
+    prior to specifying it.
+</p>
+<p>
+    The default (non-script) message processors can be deleted by name using the
+    FuzzAPI, if they are not desired. Once deleted, they cannot be re-added without
+    resetting the message processor list.
+</p>
+<p>
+    Note: processors changed after a fuzzer has been initialized will remain the
+    same for that fuzzer.
 </p>
 <h3>Fuzzer Options</h3>
 <p>
