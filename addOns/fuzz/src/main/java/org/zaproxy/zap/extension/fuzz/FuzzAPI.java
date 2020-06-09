@@ -184,8 +184,6 @@ public class FuzzAPI extends ApiImplementor {
                         ACTION_ADD_HTTP_FUZZ_MESSAGE_PROCESSOR,
                         new String[] {
                             PARAM_SCRIPT_NAME,
-                            PARAM_SCRIPT_PATH,
-                            PARAM_SCRIPT_ENGINE,
                             PARAM_SCRIPT_PARAMS,
                             PARAM_SCRIPT_INSERT
                         }));
