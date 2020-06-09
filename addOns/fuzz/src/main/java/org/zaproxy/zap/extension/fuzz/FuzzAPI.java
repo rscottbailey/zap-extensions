@@ -56,6 +56,7 @@ import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzer;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzerHandler;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzerMessageProcessor;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.HttpFuzzerOptions;
+import org.zaproxy.zap.extension.fuzz.httpfuzzer.processors.FuzzerHttpMessageScriptProcessorAdapter;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.processors.HttpFuzzerReflectionDetector;
 import org.zaproxy.zap.extension.fuzz.httpfuzzer.processors.RequestContentLengthUpdaterProcessor;
 import org.zaproxy.zap.extension.fuzz.messagelocations.MessageLocationsReplacementStrategy;
@@ -66,6 +67,7 @@ import org.zaproxy.zap.extension.fuzz.payloads.generator.FileStringPayloadGenera
 import org.zaproxy.zap.extension.fuzz.payloads.generator.PayloadGenerator;
 import org.zaproxy.zap.extension.fuzz.payloads.generator.StringPayloadGenerator;
 import org.zaproxy.zap.extension.httppanel.Message;
+import org.zaproxy.zap.extension.script.ScriptWrapper;
 import org.zaproxy.zap.model.HttpMessageLocation;
 import org.zaproxy.zap.model.MessageLocation;
 import org.zaproxy.zap.model.TextHttpMessageLocation;
@@ -184,7 +186,8 @@ public class FuzzAPI extends ApiImplementor {
         this.addApiAction(
                 new ApiAction(
                         ACTION_REMOVE_HTTP_FUZZ_MESSAGE_PROCESSOR,
-                        new String[] {PARAM_PROCESSOR_NAME
+                        new String[] {
+                            PARAM_SCRIPT_NAME
                         }));
         this.addApiAction(new ApiAction(ACTION_RESET_DEFAULT_HTTP_FUZZ_MESSAGE_PROCESSORS));
 
@@ -296,6 +299,7 @@ public class FuzzAPI extends ApiImplementor {
     public ApiResponse handleApiAction(String name, JSONObject params) throws ApiException {
         HttpFuzzer httpFuzzer;
         HttpFuzzerHandler httpFuzzerHandler;
+        List<HttpFuzzerMessageProcessor> processors;
         switch (name) {
             case ACTION_MULTIPLE_PAYLOAD_FUZZER: // This one needs a valid JSON schema input to work
                 LOGGER.info("Starting fuzzer");
@@ -310,7 +314,7 @@ public class FuzzAPI extends ApiImplementor {
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocationsTest =
                         createFuzzLocationsFromJsonInput(fuzzLocationsObject);
                 RecordHistory recordHistoryTest = getRecordHistory(params);
-                List<HttpFuzzerMessageProcessor> processors = getMessageProcessors;
+                processors = getMessageProcessors();
                 httpFuzzerHandler = new HttpFuzzerHandler();
                 HttpFuzzer httpFuzzerTest =
                         httpFuzzerHandler.createFuzzer(
@@ -370,7 +374,7 @@ public class FuzzAPI extends ApiImplementor {
                 }
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocations =
                         createFuzzLocations(httpLocation, locationStart, locationEnd, payloadPath);
-                List<HttpFuzzerMessageProcessor> processors = getMessageProcessors;
+                processors = getMessageProcessors();
                 HttpFuzzer httpFuzzerSimple =
                         httpFuzzerHandler.createFuzzer(
                                 recordHistory.getHttpMessage(),
@@ -516,38 +520,25 @@ public class FuzzAPI extends ApiImplementor {
             String scriptName, String scriptParameters, int insertAt) {
         int where = -1 == insertAt ? httpFuzzerMessageProcessors.size() : insertAt; 
 
-        // Look up the correct script type; it will always be httpfuzzerprocessor
-        // since that is what we are manipulating.
-        scriptType = extension.getScriptType("httpfuzzerprocessor");
-
-        // We're accepting
-
         // We claim we're adding a script, but actually we're adding a generic
         // processor that will call the script.
         LOGGER.info(
             "Inserting message processor script adapter: "
-                + where.toString()
+                + Integer.toString(where)
                 + " "
                 + scriptName);
         ScriptWrapper fuzzScriptWrapper = getScriptsExtension().getScript(scriptName);
 
-        /*
-        var fuzzScriptWrapper = new ScriptWrapper(
-            scriptName,
-            "This is description",
-            engineName,
-            scriptType,
-            true,
-            "This is filename"
+        // We need to convert JSON string to a map
+        HashMap<String, String> scriptParameterMap = (HashMap<String, String>) JSONObject.toBean(
+            JSONObject.fromObject(scriptParameters),
+            HashMap.class
         );
 
-
-        ScriptWrapper(scriptName, "description", ScriptEngineWrapper scriptEngine, scriptType) 
-        */
-
-        var fuzzScriptAdapter = new FuzzerHttpMessageScriptProcessorAdapter(
+        // Create adapter processor using wrapper and parameters
+        HttpFuzzerMessageProcessor fuzzScriptAdapter = new FuzzerHttpMessageScriptProcessorAdapter(
             fuzzScriptWrapper,
-            scriptParameters
+            scriptParameterMap
         );
         httpFuzzerMessageProcessors.add(where, fuzzScriptAdapter);
     }
@@ -566,7 +557,7 @@ public class FuzzAPI extends ApiImplementor {
         for (int i=0; i<httpFuzzerMessageProcessors.size(); i++) {
             if (httpFuzzerMessageProcessors.get(i).getName() == scriptName) {
                 LOGGER.info(
-                    "Removing fuzz message processor #" + i.toString()
+                    "Removing fuzz message processor #" + Integer.toString(i)
                 );
                 httpFuzzerMessageProcessors.remove(i);
                 break;
@@ -694,7 +685,7 @@ public class FuzzAPI extends ApiImplementor {
         if (httpFuzzerMessageProcessors == null) {
             resetMessageProcessors();
         }
-        return new List<HttpFuzzerMessageProcessor>(httpFuzzerMessageProcessors);
+        return new ArrayList<HttpFuzzerMessageProcessor>(httpFuzzerMessageProcessors);
     }
 
     /**
