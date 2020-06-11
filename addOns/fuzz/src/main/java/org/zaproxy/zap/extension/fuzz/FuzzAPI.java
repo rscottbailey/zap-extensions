@@ -37,6 +37,7 @@ import net.sf.json.JSONSerializer;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.db.DatabaseException;
 import org.parosproxy.paros.db.RecordHistory;
 import org.parosproxy.paros.db.TableHistory;
@@ -531,7 +532,11 @@ public class FuzzAPI extends ApiImplementor {
                         + scriptName);
 
         // Look up the previously-loaded script
-        ScriptWrapper fuzzScriptWrapper = new ExtensionScript().getScript(scriptName);
+        ScriptWrapper fuzzScriptWrapper =
+                Control.getSingleton()
+                        .getExtensionLoader()
+                        .getExtension(ExtensionScript.class)
+                        .getScript(scriptName);
 
         // We need to convert JSON string to a map
         HashMap<String, String> scriptParameterMap =
