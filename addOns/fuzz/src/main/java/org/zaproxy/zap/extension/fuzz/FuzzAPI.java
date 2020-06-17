@@ -349,6 +349,7 @@ public class FuzzAPI extends ApiImplementor {
                                 + getOptions().getSendMessageDelay()
                                 + " "
                                 + getOptions().getPayloadsReplacementStrategy());
+                LOGGER.info("Message processors: " + listMessageProcessors());
                 LOGGER.info("Number of fuzzLocations: " + fuzzLocationsTest.size());
                 // creating a new fuzzer handler for every new fuzzer request
                 extension.runFuzzer(httpFuzzerHandler, httpFuzzerTest);
@@ -704,6 +705,21 @@ public class FuzzAPI extends ApiImplementor {
             resetMessageProcessors();
         }
         return new ArrayList<HttpFuzzerMessageProcessor>(httpFuzzerMessageProcessors);
+    }
+
+    private String listMessageProcessors() {
+        if (httpFuzzerMessageProcessors == null) {
+            resetMessageProcessors();
+        }
+
+        String result = "";
+        for (int i = 0; i < httpFuzzerMessageProcessors.size(); i++) {
+            if (i > 0) {
+                result += ", ";
+            }
+            result += httpFuzzerMessageProcessors.get(i).getName();
+        }
+        return result;
     }
 
     /**
