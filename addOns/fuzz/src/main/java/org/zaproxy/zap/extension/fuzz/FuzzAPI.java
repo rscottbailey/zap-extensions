@@ -575,7 +575,7 @@ public class FuzzAPI extends ApiImplementor {
 
         // Remove (only) the first processor with a matching name
         for (int i = 0; i < httpFuzzerMessageProcessors.size(); i++) {
-            if (httpFuzzerMessageProcessors.get(i).getName() == scriptName) {
+            if (scriptName.equals(httpFuzzerMessageProcessors.get(i).getName())) {
                 LOGGER.info("Removing fuzz message processor script #" + Integer.toString(i));
                 httpFuzzerMessageProcessors.remove(i);
                 break;
