@@ -273,13 +273,12 @@ public class FuzzAPI extends ApiImplementor {
                 apiResponseList = new ApiResponseList(PARAM_MESSAGE_PROCESSORS);
 
                 for (int i = 0; i < processors.size(); i++) {
-                    HttpFuzzerMessageProcessor current = processors.getEntry(i);
-                    HashMap<String, String> values = HashMap<String, String>();
+                    HttpFuzzerMessageProcessor current = processors.get(i);
+                    HashMap<String, String> values = new HashMap<String, String>();
                     values.put("name", current.getName());
                     values.put("class", current.getClass().getCanonicalName());
                     apiResponseList.addItem(
-                        ApiResponseSet<String>(Integer.toString(i), values);
-                    );
+                            new ApiResponseSet<String>(Integer.toString(i), values));
                 }
                 return apiResponseList;
             default:
