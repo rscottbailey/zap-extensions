@@ -101,6 +101,7 @@ public class FuzzAPI extends ApiImplementor {
     private static final String FUZZ_LOCATION_SEPARATOR = ":";
     private static final String PARAM_MESSAGES_SENT = "messagesSent";
     private static final String PARAM_RESULTS = "results";
+    private static final String PARAM_MESSAGE_PROCESSORS = "messageProcessors";
 
     private ExtensionFuzz extension;
 
@@ -218,6 +219,7 @@ public class FuzzAPI extends ApiImplementor {
     @Override
     public ApiResponse handleApiView(String name, JSONObject params) throws ApiException {
         HttpFuzzer fuzzer;
+        List<HttpFuzzerMessageProcessor> processors;
         ApiResponseList apiResponseList;
         switch (name) {
             case VIEW_GET_MESSAGES_SENT:
@@ -267,7 +269,19 @@ public class FuzzAPI extends ApiImplementor {
                 }
                 return apiResponseList;
             case VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS:
-                return new ApiResponseElement(VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS, "FIXME");
+                processors = getMessageProcessors();
+                apiResponseList = new ApiResponseList(PARAM_MESSAGE_PROCESSORS);
+
+                for (int i = 0; i < processors.size(); i++) {
+                    HttpFuzzerMessageProcessor current = processors.getEntry(i);
+                    HashMap<String, String> values = HashMap<String, String>();
+                    values.put("name", current.getName());
+                    values.put("class", current.getClass().getCanonicalName());
+                    apiResponseList.addItem(
+                        ApiResponseSet<String>(Integer.toString(i), values);
+                    );
+                }
+                return apiResponseList;
             default:
                 throw new ApiException(ApiException.Type.BAD_VIEW);
         }
