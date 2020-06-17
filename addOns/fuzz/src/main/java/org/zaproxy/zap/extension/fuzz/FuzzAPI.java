@@ -333,7 +333,7 @@ public class FuzzAPI extends ApiImplementor {
                                 recordHistoryTest.getHttpMessage(),
                                 fuzzLocationsTest,
                                 getOptions(),
-                                httpFuzzerMessageProcessors);
+                                getMessageProcessors());
                 LOGGER.info("Running multiple payload fuzzer.");
                 LOGGER.info(
                         "Fuzzer options used are: "
@@ -392,7 +392,7 @@ public class FuzzAPI extends ApiImplementor {
                                 recordHistory.getHttpMessage(),
                                 fuzzLocations,
                                 getOptions(),
-                                httpFuzzerMessageProcessors);
+                                getMessageProcessors());
                 extension.runFuzzer(httpFuzzerHandler, httpFuzzerSimple);
                 assert httpFuzzerSimple
                         != null; // Can't be null if it is an exception should be thrown before
