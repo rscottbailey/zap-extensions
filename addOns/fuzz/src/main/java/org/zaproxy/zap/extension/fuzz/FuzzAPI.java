@@ -219,7 +219,6 @@ public class FuzzAPI extends ApiImplementor {
     @Override
     public ApiResponse handleApiView(String name, JSONObject params) throws ApiException {
         HttpFuzzer fuzzer;
-        List<HttpFuzzerMessageProcessor> processors;
         ApiResponseList apiResponseList;
         switch (name) {
             case VIEW_GET_MESSAGES_SENT:
@@ -269,7 +268,7 @@ public class FuzzAPI extends ApiImplementor {
                 }
                 return apiResponseList;
             case VIEW_GET_HTTP_FUZZ_MESSAGE_PROCESSORS:
-                processors = getMessageProcessors();
+                List<HttpFuzzerMessageProcessor> processors = getMessageProcessors();
                 apiResponseList = new ApiResponseList(PARAM_MESSAGE_PROCESSORS);
 
                 for (int i = 0; i < processors.size(); i++) {
@@ -314,7 +313,6 @@ public class FuzzAPI extends ApiImplementor {
     public ApiResponse handleApiAction(String name, JSONObject params) throws ApiException {
         HttpFuzzer httpFuzzer;
         HttpFuzzerHandler httpFuzzerHandler;
-        List<HttpFuzzerMessageProcessor> processors;
         switch (name) {
             case ACTION_MULTIPLE_PAYLOAD_FUZZER: // This one needs a valid JSON schema input to work
                 LOGGER.info("Starting fuzzer");
@@ -329,14 +327,13 @@ public class FuzzAPI extends ApiImplementor {
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocationsTest =
                         createFuzzLocationsFromJsonInput(fuzzLocationsObject);
                 RecordHistory recordHistoryTest = getRecordHistory(params);
-                processors = getMessageProcessors();
                 httpFuzzerHandler = new HttpFuzzerHandler();
                 HttpFuzzer httpFuzzerTest =
                         httpFuzzerHandler.createFuzzer(
                                 recordHistoryTest.getHttpMessage(),
                                 fuzzLocationsTest,
                                 getOptions(),
-                                processors);
+                                httpFuzzerMessageProcessors);
                 LOGGER.info("Running multiple payload fuzzer.");
                 LOGGER.info(
                         "Fuzzer options used are: "
@@ -390,13 +387,12 @@ public class FuzzAPI extends ApiImplementor {
                 }
                 List<PayloadGeneratorMessageLocation<?>> fuzzLocations =
                         createFuzzLocations(httpLocation, locationStart, locationEnd, payloadPath);
-                processors = getMessageProcessors();
                 HttpFuzzer httpFuzzerSimple =
                         httpFuzzerHandler.createFuzzer(
                                 recordHistory.getHttpMessage(),
                                 fuzzLocations,
                                 getOptions(),
-                                processors);
+                                httpFuzzerMessageProcessors);
                 extension.runFuzzer(httpFuzzerHandler, httpFuzzerSimple);
                 assert httpFuzzerSimple
                         != null; // Can't be null if it is an exception should be thrown before
