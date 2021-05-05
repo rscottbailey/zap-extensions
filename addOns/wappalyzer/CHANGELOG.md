@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 
+## [20.1.0] - 2020-06-30
+### Changed
+- Updated with upstream Wappalyzer icon and pattern changes.
+
+### Fixed
+- Correct script matching, check only script elements (Issue 6054).
+
 ## [20.0.0] - 2020-06-15
 ### Changed
 - Update RE2/J library to latest version (1.4).
@@ -127,6 +134,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - First version
 
 
+[20.1.0]: https://github.com/zaproxy/zap-extensions/releases/wappalyzer-v20.1.0
 [20.0.0]: https://github.com/zaproxy/zap-extensions/releases/wappalyzer-v20.0.0
 [19]: https://github.com/zaproxy/zap-extensions/releases/wappalyzer-v19
 [18]: https://github.com/zaproxy/zap-extensions/releases/wappalyzer-v18
